@@ -25,7 +25,7 @@ public class GameEngine : IGameEngine
             throw new InvalidGameInputException($"Game already has a player: {player}");
         }
 
-        _logger.LogInformation("{Player} is joining game {gameId}", player, state.Id);
+        _logger?.LogInformation("{Player} is joining game {gameId}", player, state.Id);
 
         state.Moves[player] = null;
 
@@ -38,7 +38,7 @@ public class GameEngine : IGameEngine
     {
         var guid = Guid.NewGuid().ToString("N");
 
-        _logger.LogInformation("New game created for player: {Player} with id: {Guid}", player, guid);
+        _logger?.LogInformation("New game created for player: {Player} with id: {Guid}", player, guid);
         
         return new GameStateDto(guid, new () { {player, null} }, $"{player} started the game");
     }
