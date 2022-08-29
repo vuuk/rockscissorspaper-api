@@ -9,24 +9,28 @@ public class GameValidator : IInputValidator
     {
         if (string.IsNullOrWhiteSpace(move.Player))
         {
-            return new Failure($"Field: {nameof(MoveRequestDto.Player)} is required");
-        }
-        
-        if (string.IsNullOrWhiteSpace(move.Move))
-        {
-            return new Failure($"Field: {nameof(MoveRequestDto.Move)} is required");
+            return new ValidationFailure($"Field: {nameof(MoveRequestDto.Player)} is required");
         }
 
-        return new Success();
+        return new ValidationSuccess();
     }
 
     public IValidationResult Validate(GameCreationRequestDto game)
     {
         if (string.IsNullOrWhiteSpace(game.Player))
         {
-            return new Failure($"Field: {nameof(GameCreationRequestDto.Player)} is required");
+            return new ValidationFailure($"Field: {nameof(GameCreationRequestDto.Player)} is required");
         }
 
-        return new Success();
+        return new ValidationSuccess();
+    }
+
+    public IValidationResult Validate(JoinGameRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Player))
+        {
+            return new ValidationFailure($"Field: {nameof(JoinGameRequest.Player)} is required");
+        }
+        return new ValidationSuccess();
     }
 }

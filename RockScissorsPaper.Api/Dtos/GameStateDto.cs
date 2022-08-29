@@ -1,3 +1,3 @@
 namespace RockScissorsPaper.Api.Dtos;
 
-public sealed record GameStateDto(string Guid, string[] Players, GameState State, string Description);
+public sealed record GameStateDto(string Id, Dictionary<string, Moves?> Moves, string Message);

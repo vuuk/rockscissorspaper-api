@@ -4,5 +4,7 @@ namespace RockScissorsPaper.Api.Contracts;
 
 public interface IGameEngine
 {
-    GameStateDto MakeState(GameCreationRequestDto creationDto);
+    GameStateDto CreateGame(string player);
+    GameStateDto AddPlayer(GameStateDto state, string player);
+    GameStateDto Move(GameStateDto state, MoveDto move);
 }
