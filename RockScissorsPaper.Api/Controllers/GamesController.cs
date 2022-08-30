@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using RockScissorsPaper.Api.Contracts;
-using RockScissorsPaper.Api.Dtos;
-using RockScissorsPaper.Api.BusinessLogic;
+using RockScissorsPaper.Api.Game;
+using RockScissorsPaper.Api.Dtos.Requests;
+using RockScissorsPaper.Api.Dtos.Responses;
+using RockScissorsPaper.Api.DataAccess;
 
 namespace RockScissorsPaper.Api.Controllers;
 
@@ -9,57 +10,48 @@ namespace RockScissorsPaper.Api.Controllers;
 [Route("[controller]")]
 public class GamesController : ControllerBase
 {
-    private static readonly string[] Summaries = new[]
-    {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
-
     private readonly ILogger<GamesController> _logger;
-    private readonly IInputValidator _validator;
-    private readonly IGameEngine _engine;
     private readonly IGameStateRepository _repository;
 
-    public GamesController(ILogger<GamesController> logger, IInputValidator validator, IGameEngine engine, IGameStateRepository repository)
+    public GamesController(ILogger<GamesController> logger, IGameStateRepository repository)
     {
         _logger = logger;
-        _validator = validator;
-        _engine = engine;
         _repository = repository;
     }
 
     [HttpGet("{id}")]
     public IActionResult Index(string id)
     {
-        if (string.IsNullOrWhiteSpace(id))
+        try 
         {
-            return new BadRequestObjectResult("id cannot be empty");
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return new BadRequestObjectResult("id cannot be empty");
+            }
+
+            var state = _repository.Get(id);
+
+            return new OkObjectResult(state.Winner is null ? state.ToStatusView() : state.ToResultView());
         }
-
-    var state = _repository.Get(id);
-
-    if (state is null)
-    {
-        return new BadRequestObjectResult($"Game not found: {id}");
-    }
-
-       return new OkObjectResult(state);
+        catch (DataAccessException e)
+        {
+            return new BadRequestObjectResult(e.Message);
+        }
     }
 
     [HttpPost]
     public IActionResult Index([FromBody] GameCreationRequestDto request)
     {
-       var result = _validator.Validate(request);
+        if (string.IsNullOrWhiteSpace(request.Player))
+        {
+            return new BadRequestObjectResult($"Field: {nameof(request.Player)} is required");
+        }
 
-       if (result is ValidationFailure f)
-       {
-            return new BadRequestObjectResult(f.Message);
-       }
+        var state = GameEngine.CreateGame(request.Player);
 
-       var state = _engine.CreateGame(request.Player);
+        var id = _repository.Save(state);
 
-        _repository.Save(state);
-
-       return new OkObjectResult(state);
+        return new OkObjectResult(id);
     }
 
     [HttpPost("{id}/Join")]
@@ -67,59 +59,58 @@ public class GamesController : ControllerBase
     {
         try
         {
-            var result = _validator.Validate(request);
-
-            if (result is ValidationFailure f)
+            if (string.IsNullOrWhiteSpace(request.Player))
             {
-                return new BadRequestObjectResult(f.Message);
+                return new BadRequestObjectResult($"Field: {nameof(request.Player)} is required");
             }
 
             var state = _repository.Get(id);
+            var engine = new GameEngine(state);
+            var newState = engine.AddPlayerTwo(request.Player);
 
-            if (state is null)
-            {
-                return new BadRequestObjectResult("Game not found");
-            }
+            _repository.Update(id, state, newState);
 
-            var newState = _engine.AddPlayer(state, request.Player);
-
-            _repository.Save(newState);
-
-            return new OkObjectResult(newState);
+            return new OkObjectResult(state.ToStatusView());
         }
         catch (InvalidGameInputException e)
         {
+            _logger.LogError(e.Message);
+            return new BadRequestObjectResult(e.Message);
+        }
+        catch (DataAccessException e)
+        {
+            _logger.LogError(e.Message);
             return new BadRequestObjectResult(e.Message);
         }
     }
 
     [HttpPost("{id}/Move")]
-    public ActionResult<GameStateDto> Move(string id, [FromBody] MoveRequestDto request)
+    public IActionResult Move(string id, [FromBody] MoveRequestDto request)
     {
-        try 
+        try
         {
-            var result = _validator.Validate(request);
-
-            if (result is ValidationFailure f)
+            if (string.IsNullOrWhiteSpace(request.Player))
             {
-                return new BadRequestObjectResult(f.Message);
+                return new BadRequestObjectResult($"Field: {nameof(request.Player)} is required");
+            }
+
+            if (!request.Move.HasValue)
+            {
+                return new BadRequestObjectResult($"Field: {nameof(request.Move)} is required");
             }
 
             var state = _repository.Get(id);
+            
+            var engine = new GameEngine(state);
+            var newState = engine.Move(request.Player, request.Move.Value);
 
-            if (state is null)
-            {
-                return new BadRequestObjectResult("Game not found");
-            }
+            _repository.Update(id, state, newState);
 
-            var newState = _engine.Move(state, move: new MoveDto(request.Player, request.Move));
-
-            _repository.Save(newState);
-
-            return newState;
+            return new OkObjectResult(newState.Winner is not null ? newState.ToResultView() : newState.ToStatusView());
         }
         catch (InvalidGameInputException e)
         {
+            _logger.LogError(e.Message, e);
             return new BadRequestObjectResult(e.Message);
         }
     }
