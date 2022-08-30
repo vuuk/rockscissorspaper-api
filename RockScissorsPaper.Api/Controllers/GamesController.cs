@@ -22,7 +22,7 @@ public class GamesController : ControllerBase
     [HttpGet("{id}")]
     public IActionResult Index(string id)
     {
-        try 
+        try
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -74,12 +74,12 @@ public class GamesController : ControllerBase
         }
         catch (InvalidGameInputException e)
         {
-            _logger.LogError(e.Message);
+            _logger.LogWarning(e.Message);
             return new BadRequestObjectResult(e.Message);
         }
         catch (DataAccessException e)
         {
-            _logger.LogError(e.Message);
+            _logger.LogWarning(e.Message);
             return new BadRequestObjectResult(e.Message);
         }
     }
@@ -100,7 +100,7 @@ public class GamesController : ControllerBase
             }
 
             var state = _repository.Get(id);
-            
+
             var engine = new GameEngine(state);
             var newState = engine.Move(request.Player, request.Move.Value);
 
@@ -110,7 +110,7 @@ public class GamesController : ControllerBase
         }
         catch (InvalidGameInputException e)
         {
-            _logger.LogError(e.Message, e);
+            _logger.LogWarning(e.Message);
             return new BadRequestObjectResult(e.Message);
         }
     }
