@@ -17,7 +17,7 @@ public class GameStateRepository : IGameStateRepository
     {
         if (_states.TryGetValue(id, out var state))
         {
-            _logger.LogInformation("Getting state: {@State}", state);
+            _logger.LogDebug("Getting state: {@State}", state);
             return state;
         }
 
@@ -29,7 +29,7 @@ public class GameStateRepository : IGameStateRepository
     {
         var id = Guid.NewGuid().ToString("N");
 
-        _logger.LogInformation("Saving state: {@State}", state);
+        _logger.LogDebug("Saving state: {@State}", state);
 
         if (!_states.TryAdd(id, state))
         {
@@ -41,7 +41,7 @@ public class GameStateRepository : IGameStateRepository
 
     public void Update(string id, GameState oldState, GameState newState)
     {
-        _logger.LogInformation("Updating state: {@OldDate} ==> {@NewState}", oldState, newState);
+        _logger.LogDebug("Updating state: {@OldDate} ==> {@NewState}", oldState, newState);
         if (!_states.TryUpdate(id, newState, oldState))
         {
             throw new DataAccessException("The state was already changed by another task");

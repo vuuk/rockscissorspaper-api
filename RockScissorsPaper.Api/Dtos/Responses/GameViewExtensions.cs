@@ -10,6 +10,15 @@ public static class GameViewExtensions
         }, @this.Winner!);
 
 
-    public static GameStatusView ToStatusView(this GameState @this) => new GameStatusView(@this.PlayerOneMove.Player, @this.PlayerTwoMove.Player);
+    public static GameStatusView ToStatusView(this GameState @this) {
+        var message = (@this.PlayerOneMove.Move, @this.PlayerTwoMove.Move) switch {
+            (null, null) => "Waiting for players",
+            (null, _) => $"Waiting for {@this.PlayerOneMove.Player}",
+            (_, null) => $"Waiting for {@this.PlayerTwoMove.Player ?? "player to join"}",
+            (_, _) => "Game is finished"
+        };
+        
+        return new GameStatusView(@this.PlayerOneMove.Player, @this.PlayerTwoMove.Player, message);
+    } 
 
 }
