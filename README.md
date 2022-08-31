@@ -4,8 +4,8 @@
 ## Build & Run
 The application targets .NET 6 and can be built using the following commands, from the root directory:
 ```
-dotnet publish -c Release RockScissorsPaper.Api/RockScissorsPaper.Api.csproj
-dotnet RockScissorsPaper.Api/bin/Release/net6.0/publish/RockScissorsPaper.Api.dll
+dotnet publish -o RockScissorPaper -c Release RockScissorsPaper.Api/RockScissorsPaper.Api.csproj
+dotnet RockScissorsPaper/RockScissorsPaper.Api.dll
 ```
 ## Usage
 The application provides a Swagger UI, which shows what input the api accepts. It can be found by going to: [http://localhost:5000/swagger](http://localhost:5000/swagger) in a modern browser.
